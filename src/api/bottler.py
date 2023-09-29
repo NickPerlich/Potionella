@@ -35,10 +35,19 @@ def get_bottle_plan():
 
     # Initial logic: bottle all barrels into red potions.
 
+    # find out how much red ml potionella has
     with db.engine.begin() as connection:
-        num_red_ml = connection.execute("SELECT num_red_ml FROM global_inventory")
+        num_red_ml, num_red_potions = connection.execute(sqlalchemy.text("SELECT num_red_ml, num_red_potions FROM global_inventory"))
     
+    # if potionella has at least 100 red ml
     if num_red_ml >= 100 :
+        # subtract max amount of red ml possible and add that amount of red potions to Potionella's storage
+        params = {
+            'num_red_potions': num_red_potions + num_red_ml//100,
+            'num_red_ml': num_red_ml - (num_red_ml//100)*100,
+        }
+
+
         return [
                 {
                     "potion_type": [100, 0, 0, 0],

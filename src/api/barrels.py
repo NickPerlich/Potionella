@@ -31,11 +31,23 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
 def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     """ """
     print(wholesale_catalog)
-
+    # get how many red potions, red ml, and gold Potionella has in inventory
     with db.engine.begin() as connection:
-        num_red_potions = connection.execute("SELECT num_red_potions FROM global_inventory")
-
-    if num_red_potions < 10 :
+        num_red_potions_in_inventory, gold, num_red_ml_in_inventory = connection.execute(sqlalchemy.text("SELECT num_red_potions, gold, num_red_ml FROM global_inventory"))
+    # check if there is a small red barrel for sale
+    for barrel in wholesale_catalog:
+        if barrel.sku.equals("SMALL_RED_BARREL"):
+            small_red_barrel = barrel
+    # if Potionella has less than ten red potions in stock, there is a small red barrel for sale and Potionella has enough funds
+    if num_red_potions_in_inventory < 10 and small_red_barrel.quantity >= 1 and gold >= small_red_barrel.price:
+        # subtract cost of one small red barrel from Potionella's gold funds and add one small red barrel's worth of red ml to Potionella's red ml amount 
+        params = {
+            'gold': gold - small_red_barrel.price,
+            'num_red_ml': num_red_ml_in_inventory + small_red_barrel.ml_per_barrel,
+        }
+        
+        connection.execute(sqlalchemy.text("UPDATE global_inventory SET gold = :gold, num_red_ml :num_red_ml"), **params)
+        
         return [
             {
                 "sku": "SMALL_RED_BARREL",
