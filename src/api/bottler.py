@@ -37,7 +37,7 @@ def get_bottle_plan():
 
     # find out how much red ml potionella has
     with db.engine.begin() as connection:
-        num_red_ml, num_red_potions = connection.execute(sqlalchemy.text("SELECT num_red_ml, num_red_potions FROM global_inventory"))
+        result = connection.execute(sqlalchemy.text("SELECT num_red_ml, num_red_potions FROM global_inventory"))
     
     # if potionella has at least 100 red ml
     if num_red_ml >= 100 :
