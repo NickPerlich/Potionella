@@ -41,7 +41,7 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
             'num_red_ml': result.num_red_ml + small_red_barrel.ml_per_barrel,
         }
         
-        with db.engine.bein() as connection:
+        with db.engine.begin() as connection:
             connection.execute(sqlalchemy.text("UPDATE global_inventory SET gold = :gold, num_red_ml :num_red_ml"), params)
 
     return "OK"
