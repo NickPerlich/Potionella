@@ -33,12 +33,12 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
 
     if small_red_barrel is not None:
         with db.engine.begin() as connection:
-            result = connection.execute(sqlalchemy.text("SELECT gold, num_red_ml FROM global_inventory"))
+            result = connection.execute(sqlalchemy.text("SELECT gold, num_red_ml FROM global_inventory")).first()
 
         # subtract cost of one small red barrel from Potionella's gold funds and add one small red barrel's worth of red ml to Potionella's red ml amount 
         params = {
-            'gold': result.first[0] - small_red_barrel.price,
-            'num_red_ml': result.first[1] + small_red_barrel.ml_per_barrel,
+            'gold': result[0] - small_red_barrel.price,
+            'num_red_ml': result[1] + small_red_barrel.ml_per_barrel,
         }
         
         with db.engine.bein() as connection:
@@ -53,10 +53,10 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     print(wholesale_catalog)
     # get how many red potions and gold Potionella has in inventory
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text("SELECT num_red_potions, gold FROM global_inventory"))
+        result = connection.execute(sqlalchemy.text("SELECT num_red_potions, gold FROM global_inventory")).first()
 
-    num_red_potions_in_inventory = result.first().num_red_potions
-    gold = result.first().gold
+    num_red_potions_in_inventory = result.num_red_potions
+    gold = result.gold
     
     # check if there is a small red barrel for sale
     small_red_barrel = None
