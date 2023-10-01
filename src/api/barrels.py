@@ -62,7 +62,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     small_red_barrel = None
 
     for barrel in wholesale_catalog:
-        if barrel.sku.equals("SMALL_RED_BARREL"):
+        if barrel.sku == "SMALL_RED_BARREL":
             small_red_barrel = barrel
     # if Potionella has less than ten red potions in stock, there is a small red barrel for sale and Potionella has enough funds
     if num_red_potions_in_inventory < 10 and small_red_barrel.quantity >= 1 and gold >= small_red_barrel.price and small_red_barrel is not None:
