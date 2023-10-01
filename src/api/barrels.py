@@ -28,7 +28,7 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
     small_red_barrel = None
 
     for barrel in barrels_delivered:
-        if barrel.sku.equals("SMALL_RED_BARREL"):
+        if barrel.sku == "SMALL_RED_BARREL":
             small_red_barrel = barrel
 
     if small_red_barrel is not None:
@@ -37,8 +37,8 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
 
         # subtract cost of one small red barrel from Potionella's gold funds and add one small red barrel's worth of red ml to Potionella's red ml amount 
         params = {
-            'gold': result[0] - small_red_barrel.price,
-            'num_red_ml': result[1] + small_red_barrel.ml_per_barrel,
+            'gold': result.gold - small_red_barrel.price,
+            'num_red_ml': result.num_red_ml + small_red_barrel.ml_per_barrel,
         }
         
         with db.engine.bein() as connection:
