@@ -79,25 +79,28 @@ class CartCheckout(BaseModel):
 @router.post("/{cart_id}/checkout")
 def checkout(cart_id: int, cart_checkout: CartCheckout):
     """ """
-    # subtract all the items in the cart from global inventory
+    # get number of potions in inventory
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text("SELECT num_red_potions, num_green_potions, num_blue_potions, gold FROM global_inventory")).first()
+        result = connection.execute(sqlalchemy.text("SELECT num_red_potions, num_green_potions, num_blue_potions, gold, num_carts FROM global_inventory")).first()
 
     params = {
         'cart_id': cart_id
     }
-
+    # get number of potions in cart
     with db.engine.begin() as connection:
-        carts_result = connection.execute(sqlalchemy.text("SELECT RED_POTION_0, GREEN_POTION_0, BLUE_POTION_0 FROM carts WHERE cart_id = :cart_id")).first()
+        carts_result = connection.execute(sqlalchemy.text("SELECT RED_POTION_0, GREEN_POTION_0, BLUE_POTION_0 FROM carts WHERE cart_id = :cart_id"), params).first()
 
     params = {
         'gold': result.gold + cart_checkout, 
-        'num_red_potions': result.num_red_potions - 1,
+        'num_red_potions': result.num_red_potions - carts_result.RED_POTION_0,
+        'num_green_potions': result.num_green_potions - carts_result.GREEN_POTION_0,
+        'num_blue_potions': result.num_blue_potions - carts_result.BLUE_POTION_0
+
     }
-
+    # subtract number of potions in cart from number of potions in inventory and increase gold by payment
     with db.engine.begin() as connection:
-        connection.execute(sqlalchemy.text("UPDATE global_inventory SET num_red_potions = :num_red_potions, gold = :gold"), params)
+        connection.execute(sqlalchemy.text("UPDATE global_inventory SET num_red_potions = :num_red_potions, num_green_potions = :num_green_potions, num_blue_potions = :num_blue_potions, gold = :gold"), params)
 
-    return {"total_potions_bought": 1, "total_gold_paid": 50}
+    return {"total_potions_bought": cart_checkout % 1, "total_gold_paid": cart_checkout}
     
 
