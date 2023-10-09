@@ -43,7 +43,7 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
         }
 
         with db.engine.begin() as connection:
-            result = connection.execute(sqlalchemy.text("UPDATE global_inventory SET num_red_potions = :num_red_potions, num_red_ml = :num_red_ml"), params)
+            connection.execute(sqlalchemy.text("UPDATE global_inventory SET num_red_potions = :num_red_potions, num_red_ml = :num_red_ml"), params)
 
     if small_green_potion is not None:
         with db.engine.begin() as connection:
@@ -56,7 +56,7 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
         }
 
         with db.engine.begin() as connection:
-            result = connection.execute(sqlalchemy.text("UPDATE global_inventory SET num_green_potions = :num_green_potions, num_green_ml = :num_green_ml"), params)
+            connection.execute(sqlalchemy.text("UPDATE global_inventory SET num_green_potions = :num_green_potions, num_green_ml = :num_green_ml"), params)
 
     if small_blue_potion is not None:
         with db.engine.begin() as connection:
@@ -69,7 +69,7 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
         }
 
         with db.engine.begin() as connection:
-            result = connection.execute(sqlalchemy.text("UPDATE global_inventory SET num_blue_potions = :num_blue_potions, num_blue_ml = :num_blue_ml"), params)
+            connection.execute(sqlalchemy.text("UPDATE global_inventory SET num_blue_potions = :num_blue_potions, num_blue_ml = :num_blue_ml"), params)
 
     return "OK"
 
