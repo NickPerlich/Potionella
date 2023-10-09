@@ -52,21 +52,21 @@ def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
     if item_sku == "RED_POTION_0":
         params = {
             'cart_id': cart_id,
-            'RED_POTION_0': cart_item
+            'RED_POTION_0': cart_item.quantity
         }
         with db.engine.begin() as connection:
             connection.execute(sqlalchemy.text("UPDATE carts SET RED_POTION_0 = :RED_POTION_0 WHERE cart_id = :cart_id"), params)
     elif item_sku == "GREEN_POTION_0":
         params = {
             'cart_id': cart_id,
-            'GREEN_POTION_0': cart_item
+            'GREEN_POTION_0': cart_item.quantity
         }
         with db.engine.begin() as connection:
             connection.execute(sqlalchemy.text("UPDATE carts SET GREEN_POTION_0 = :GREEN_POTION_0 WHERE cart_id = :cart_id"), params)
     elif item_sku == "BLUE_POTION_0":
         params = {
             'cart_id': cart_id,
-            'BLUE_POTION_0': cart_item
+            'BLUE_POTION_0': cart_item.quantity
         }
         with db.engine.begin() as connection:
             connection.execute(sqlalchemy.text("UPDATE carts SET BLUE_POTION_0 = :BLUE_POTION_0 WHERE cart_id = :cart_id"), params)
