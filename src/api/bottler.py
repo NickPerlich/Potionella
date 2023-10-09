@@ -56,17 +56,22 @@ def get_bottle_plan():
 
     # find out how much red ml potionella has
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text("SELECT num_red_ml, num_red_potions FROM global_inventory")).first()
+        result = connection.execute(sqlalchemy.text("SELECT num_red_ml, num_green_ml, num_blue_ml FROM global_inventory")).first()
     
-    # if potionella has at least 100 red ml plan to bottle into potions
+    small_red_potion = { "potion_type": [100, 0, 0, 0], "quantity": result.num_red_ml//100 }
+    small_green_potion = { "potion_type": [0, 100, 0, 0], "quantity": result.num_green_ml//100 }
+    small_blue_potion = { "potion_type": [0, 0, 100, 0], "quantity": result.num_blue_ml//100 }
+
+    potions = []
+
+    # if potionella has at least 100 ml plan to bottle into potions
     if result.num_red_ml >= 100:
-        return [
-                {
-                    "potion_type": [100, 0, 0, 0],
-                    "quantity": result.num_red_ml//100,
-                }
-            ]
-    else :
-        return []
+        potions.append(small_red_potion)
+    if result.num_green_ml >= 100:
+        potions.append(small_green_potion)
+    if result.num_blue_ml >= 100:
+        potions.append(small_blue_potion)
+
+    return potions
 
 
