@@ -69,7 +69,7 @@ def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
             'BLUE_POTION_0': cart_item
         }
         with db.engine.begin() as connection:
-            connection.execute(sqlalchemy.text("UPDATE carts SET BLUE_POTION_0 = :BLUEPOTION_0 WHERE cart_id = :cart_id"), params)
+            connection.execute(sqlalchemy.text("UPDATE carts SET BLUE_POTION_0 = :BLUE_POTION_0 WHERE cart_id = :cart_id"), params)
     return "OK"
 
 
