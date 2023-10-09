@@ -94,9 +94,9 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
 
     params = {
         'gold': result.gold + payment, 
-        'num_red_potions': result.num_red_potions - carts_result.RED_POTION_0,
-        'num_green_potions': result.num_green_potions - carts_result.GREEN_POTION_0,
-        'num_blue_potions': result.num_blue_potions - carts_result.BLUE_POTION_0
+        'num_red_potions': result.num_red_potions - carts_result.red_potion_0,
+        'num_green_potions': result.num_green_potions - carts_result.green_potion_0,
+        'num_blue_potions': result.num_blue_potions - carts_result.blue_potion_0
 
     }
     # subtract number of potions in cart from number of potions in inventory and increase gold by payment
