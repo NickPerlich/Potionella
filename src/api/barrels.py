@@ -21,6 +21,8 @@ class Barrel(BaseModel):
     quantity: int
 
 # this function is an implementation of the solution to the 01-knapsack problem
+# it returns table which is a 2d array where row is num_items and column is capacity
+# it also returns items_taken which is a list of indices representing which (weight, value) items were taken
 def knapSack(capacity: int, num_items: int, weights: List[int], values: List[float]):
     table = [[0] * (capacity+1) for _ in range(num_items+1)]
     # fill in the table using dynamic programming
@@ -45,11 +47,11 @@ def knapSack(capacity: int, num_items: int, weights: List[int], values: List[flo
         if weight > j or table[i][j] != table[i-1][j-weight]+value:
             i -= 1
         else:
-            items_taken.append(i)
+            items_taken.append(i-1)
             i -= 1
             j -= weight
 
-    return table, items_taken
+    return table, items_taken[::-1]
 
 def invert_number(number):
     if number == 0:
@@ -138,35 +140,43 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         if barrel.sku == "SMALL_BLUE_BARREL":
             bbarrel = barrel
 
+    # prices is a list of barrel costs, num_potions is a list of how many potions of that color I have, and barrels is a list of the type of barrel
     prices = []
     num_potions = []
+    barrels = []
+    # all possible barrels that could be bought
+    small_red_barrel = { "sku": "SMALL_RED_BARREL", "quantity": 1}
+    small_green_barrel = { "sku": "SMALL_GREEN_BARREL", "quantity": 1}
+    small_blue_barrel = { "sku": "SMALL_BLUE_BARREL", "quantity": 1}
 
     #decide which barrels to buy out of what is available
     if rbarrel is not None and result.num_red_potions < 10 and rbarrel.quantity >= 1:
         prices.append(rbarrel.price)
         num_potions.append(result.num_red_potions)
+        barrels.append(small_red_barrel)
     if gbarrel is not None and result.num_green_potions < 10 and gbarrel.quantity >= 1:
         prices.append(gbarrel.price)
         num_potions.append(result.num_green_potions)
+        barrels.append(small_green_barrel)
     if bbarrel is not None and result.num_blue_potions < 10 and bbarrel.quantity >= 1:
         prices.append(bbarrel.price)   
         num_potions.append(result.num_blue_potions)
+        barrels.append(small_blue_barrel)
         
     # the demand of a potion type is greater the less of it I have
     demand = []
     for potion_amount in num_potions:
         demand.append(invert_number(potion_amount))
         
+    # items_taken is a list of which barrels to buy
     _, items_taken = knapSack(result.gold, len(prices), prices, demand)
 
-    small_red_barrel = { "sku": "SMALL_RED_BARREL", "quantity": 1}
-    small_green_barrel = { "sku": "SMALL_GREEN_BARREL", "quantity": 1}
-    small_blue_barrel = { "sku": "SMALL_BLUE_BARREL", "quantity": 1}
+    # format the api response
+    barrels_to_purchase = []
 
-    barrels = [small_red_barrel, small_green_barrel, small_blue_barrel]
-
-    barrels_to_purchase = barrels[:len(items_taken)]
-    
+    for item in items_taken:
+        barrels_to_purchase.append(barrels[item])
+    # send the api response
     if len(items_taken) > 0:
         return barrels_to_purchase
     else :
