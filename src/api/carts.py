@@ -48,6 +48,7 @@ class CartItem(BaseModel):
 @router.post("/{cart_id}/items/{item_sku}")
 def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
     """ """
+    # set carts[cart_id][item_sku] = cart_item
     if item_sku == "RED_POTION_0":
         params = {
             'cart_id': cart_id,
@@ -78,11 +79,19 @@ class CartCheckout(BaseModel):
 @router.post("/{cart_id}/checkout")
 def checkout(cart_id: int, cart_checkout: CartCheckout):
     """ """
+    # subtract all the items in the cart from global inventory
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text("SELECT num_red_potions, gold FROM global_inventory")).first()
+        result = connection.execute(sqlalchemy.text("SELECT num_red_potions, num_green_potions, num_blue_potions, gold FROM global_inventory")).first()
 
     params = {
-        'gold': result.gold + 50, 
+        'cart_id': cart_id
+    }
+
+    with db.engine.begin() as connection:
+        carts_result = connection.execute(sqlalchemy.text("SELECT RED_POTION_0, GREEN_POTION_0, BLUE_POTION_0 FROM carts WHERE cart_id = :cart_id")).first()
+
+    params = {
+        'gold': result.gold + cart_checkout, 
         'num_red_potions': result.num_red_potions - 1,
     }
 
