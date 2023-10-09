@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from src.api import auth
 import sqlalchemy
 from src import database as db
-from optimization import knapSack
+from typing import List
 
 router = APIRouter(
     prefix="/barrels",
@@ -19,6 +19,40 @@ class Barrel(BaseModel):
     price: int
 
     quantity: int
+
+# this function is an implementation of the solution to the 01-knapsack problem
+def knapSack(capacity: int, num_items: int, weights: List[int], values: List[float]):
+    table = [[0] * (capacity+1) for _ in range(num_items+1)]
+    # fill in the table using dynamic programming
+    for n in range(1, num_items+1):
+        for cap in range(1, capacity+1):
+            item_weight = weights[n-1]
+            item_value = values[n-1]
+            if item_weight > cap:
+                table[n][cap] = table[n-1][cap]
+            else:
+                table[n][cap] = max(table[n-1][cap-item_weight]+item_value, table[n-1][cap]) 
+
+    #trace back through the table
+    items_taken = []
+    i = num_items
+    j = capacity
+
+    while i > 0 and j > 0:
+        weight = weights[i-1]
+        value = values[i-1]
+
+        if weight > j or table[i][j] != table[i-1][j-weight]+value:
+            i -= 1
+        else:
+            items_taken.append(i)
+            i -= 1
+            j -= weight
+
+    return table, items_taken
+
+def invert_number(number):
+    return 1 / number
 
 @router.post("/deliver")
 def post_deliver_barrels(barrels_delivered: list[Barrel]):
@@ -37,7 +71,7 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
             gbarrel = barrel
         if barrel.sku == "SMALL_BLUE_BARREL":
             bbarrel = barrel
-            
+
     #update database if small red barrel was purchased
     if rbarrel is not None:
         with db.engine.begin() as connection:
@@ -103,23 +137,25 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
             bbarrel = barrel
 
     prices = []
-    demands = []
+    num_potions = []
 
-    #buy barrels as needed
+    #decide which barrels to buy out of what is available
     if rbarrel is not None and result.num_red_potions < 10 and rbarrel.quantity >= 1:
         prices.append(rbarrel.price)
-        demands.append(result.num_red_potions)
+        num_potions.append(result.num_red_potions)
     if gbarrel is not None and result.num_green_potions < 10 and gbarrel.quantity >= 1:
         prices.append(gbarrel.price)
-        demands.append(result.num_green_potions)
+        num_potions.append(result.num_green_potions)
     if bbarrel is not None and result.num_blue_potions < 10 and bbarrel.quantity >= 1:
         prices.append(bbarrel.price)   
-        demands.append(result.num_blue_potions)
+        num_potions.append(result.num_blue_potions)
         
-    # the demand of a potion type is greater the less of it I have and the order is [r,g,b,d]
-    demands.sort(reverse=True)
+    # the demand of a potion type is greater the less of it I have
+    demand = []
+    for potion_amount in num_potions:
+        demand.append(invert_number(potion_amount))
         
-    _, items_taken = knapSack(result.gold, len(prices), prices, demands)
+    _, items_taken = knapSack(result.gold, len(prices), prices, demand)
 
     small_red_barrel = { "sku": "SMALL_RED_BARREL", "quantity": 1}
     small_green_barrel = { "sku": "SMALL_GREEN_BARREL", "quantity": 1}
