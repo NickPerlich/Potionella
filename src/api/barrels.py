@@ -52,6 +52,8 @@ def knapSack(capacity: int, num_items: int, weights: List[int], values: List[flo
     return table, items_taken
 
 def invert_number(number):
+    if number == 0:
+        return 1000
     return 1 / number
 
 @router.post("/deliver")
