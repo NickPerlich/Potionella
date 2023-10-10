@@ -90,7 +90,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
     with db.engine.begin() as connection:
         carts_result = connection.execute(sqlalchemy.text("SELECT RED_POTION_0, GREEN_POTION_0, BLUE_POTION_0 FROM carts WHERE cart_id = :cart_id"), params).first()
 
-    payment = int(cart_checkout.payment)
+    payment = carts_result.red_potion_0 + carts_result.green_potion_0 + carts_result.blue_potion_0
 
     params = {
         'gold': result.gold + payment, 
