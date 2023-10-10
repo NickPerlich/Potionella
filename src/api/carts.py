@@ -73,7 +73,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
     """ """
     # get number of potions in inventory
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text("SELECT num_red_potions, num_green_potions, num_blue_potions, gold, num_carts FROM global_inventory")).first()
+        result = connection.execute(sqlalchemy.text("SELECT num_red_potions, num_green_potions, num_blue_potions, gold FROM global_inventory")).first()
 
     params = {
         'cart_id': cart_id
