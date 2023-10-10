@@ -23,7 +23,7 @@ def create_cart(new_cart: NewCart):
         result = connection.execute(sqlalchemy.text("SELECT num_carts FROM global_inventory")).first()
     # create a new cart in the carts table
     with db.engine.begin() as connection:
-        connection.execute(sqlalchemy.text("INSERT INTO carts (RED_POTION_0, GREEN_POTION_0, BLUE_POTION_0) VALUES (0, 0, 0)"))
+        carts_result = connection.execute(sqlalchemy.text("INSERT INTO carts (RED_POTION_0, GREEN_POTION_0, BLUE_POTION_0) VALUES (0, 0, 0)")).first()
     # increment the number of carts in global_inventory
     params = {
             'num_carts': result.num_carts+1
@@ -31,7 +31,7 @@ def create_cart(new_cart: NewCart):
     with db.engine.begin() as connection:
         connection.execute(sqlalchemy.text("UPDATE global_inventory SET num_carts = :num_carts"), params)
     # return the id of the new cart
-    return {"cart_id": result.num_carts + 1}
+    return {"cart_id": carts_result.cart_id}
 
 
 @router.get("/{cart_id}")
