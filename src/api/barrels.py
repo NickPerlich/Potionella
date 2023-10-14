@@ -123,63 +123,31 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
 def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     """ """
     print(wholesale_catalog)
-    # get how many red potions and gold Potionella has in inventory
-    with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text("SELECT num_red_potions, num_blue_potions, num_green_potions, gold FROM global_inventory")).first()
     
-    # check what is for sale
-    rbarrel = None
-    gbarrel = None
-    bbarrel = None
-
-    for barrel in wholesale_catalog:
-        if barrel.sku == "SMALL_RED_BARREL":
-            rbarrel = barrel
-        if barrel.sku == "SMALL_GREEN_BARREL":
-            gbarrel = barrel
-        if barrel.sku == "SMALL_BLUE_BARREL":
-            bbarrel = barrel
-
-    # prices is a list of barrel costs, num_potions is a list of how many potions of that color I have, and barrels is a list of the type of barrel
-    prices = []
-    num_potions = []
-    barrels = []
-    # all possible barrels that could be bought
-    small_red_barrel = { "sku": "SMALL_RED_BARREL", "quantity": 1}
-    small_green_barrel = { "sku": "SMALL_GREEN_BARREL", "quantity": 1}
-    small_blue_barrel = { "sku": "SMALL_BLUE_BARREL", "quantity": 1}
-
-    #decide which barrels to buy out of what is available
-    if rbarrel is not None and result.num_red_potions < 10 and rbarrel.quantity >= 1:
-        prices.append(rbarrel.price)
-        num_potions.append(result.num_red_potions)
-        barrels.append(small_red_barrel)
-    if gbarrel is not None and result.num_green_potions < 10 and gbarrel.quantity >= 1:
-        prices.append(gbarrel.price)
-        num_potions.append(result.num_green_potions)
-        barrels.append(small_green_barrel)
-    if bbarrel is not None and result.num_blue_potions < 10 and bbarrel.quantity >= 1:
-        prices.append(bbarrel.price)   
-        num_potions.append(result.num_blue_potions)
-        barrels.append(small_blue_barrel)
+    # from the database, get all barrels I want to buy sorted by priority
+    with db.engine.begin() as connection:
+        result = connection.execute(sqlalchemy.text("SELECT sku, quantity \
+                                                     FROM barrels \
+                                                     WHERE purchase = TRUE \
+                                                     ORDER BY priority ASC")).all()
         
-    # the demand of a potion type is greater the less of it I have
-    demand = []
-    for potion_amount in num_potions:
-        demand.append(invert_number(potion_amount))
-        
-    # items_taken is a list of which barrels to buy
-    _, items_taken = knapSack(result.gold, len(prices), prices, demand)
-
-    # format the api response
+    with db.engine.begin() as connection:
+        inventory_result = connection.execute(sqlalchemy.text("SELECT gold FROM global_inventory")).first()
+        gold = inventory_result.gold
+    
+    # create the list of barrels to purchase and make sure all the barrels I want to buy are for sale and stop when I can't afford any more
     barrels_to_purchase = []
+    for row in result:
+        barrel_for_sale = next((barrel for barrel in wholesale_catalog if barrel.sku == row.sku), None)
+        if barrel_for_sale is not None and gold >= barrel_for_sale.price:
+            quantity = 0
+            wish = row.quantity
+            while gold >= barrel_for_sale.price and wish > 0:
+                quantity += 1
+                wish -= 1
+                gold -= barrel_for_sale.price 
+            barrels_to_purchase.append({ "sku": row.sku, "quantity": quantity })
 
-    for item in items_taken:
-        barrels_to_purchase.append(barrels[item])
-    # send the api response
-    if len(items_taken) > 0:
-        return barrels_to_purchase
-    else :
-        return []
+    return barrels_to_purchase
 
 
