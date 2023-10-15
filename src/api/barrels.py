@@ -32,16 +32,16 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
             gold_spent += barrel.price * barrel.quantity
             with db.engine.begin() as connection:
                 connection.execute(sqlalchemy.text("UPDATE inventory \
-                                                    SET quantity = :ml_purchased \
-                                                    WHERE potion_type = :type"), {
+                                                    SET inventory.quantity = :ml_purchased \
+                                                    WHERE inventory.potion_type = :type"), {
                                                         'ml_purchased': barrel.ml_per_barrel * barrel.quantity,
                                                         'type': barrel.potion_type
                                                     })
         # subtract gold I spent
         with db.engine.begin() as connection:
             connection.execute(sqlalchemy.text("UPDATE inventory \
-                                                SET quantity = :gold_spent \
-                                                WHERE name = gold"), {
+                                                SET inventory.quantity = :gold_spent \
+                                                WHERE inventory.name = gold"), {
                                                     'gold_spent': gold_spent
                                                 })
 
@@ -63,7 +63,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     with db.engine.begin() as connection:
         inventory_result = connection.execute(sqlalchemy.text("SELECT quantity \
                                                                FROM inventory \
-                                                               WHERE name = gold")).first()
+                                                               WHERE inventory.name = gold")).first()
         gold = inventory_result.quantity
     
     # create the list of barrels to purchase and make sure all the barrels I want to buy are for sale and stop when I can't afford any more
