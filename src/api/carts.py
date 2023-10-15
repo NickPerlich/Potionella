@@ -20,7 +20,9 @@ def create_cart(new_cart: NewCart):
     """ """
     # create a new cart in the carts table
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text("INSERT INTO carts (RED_POTION_0, GREEN_POTION_0, BLUE_POTION_0) VALUES (0, 0, 0) RETURNING cart_id"))
+        result = connection.execute(sqlalchemy.text("INSERT INTO carts (customer) VALUES (:patron) RETURNING cart_id"), {
+            'patron': new_cart.customer
+        })
         cart_id = result.scalar()
     # return the id of the new cart
     return {"cart_id": cart_id}

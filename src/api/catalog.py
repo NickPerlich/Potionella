@@ -13,8 +13,8 @@ def get_catalog():
 
     # Can return a max of 20 items.
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text("SELECT bruh, name, quantity, price, potion_type \
-                                                     FROM inventory \
+        result = connection.execute(sqlalchemy.text("SELECT sku, name, quantity, price, potion_type \
+                                                     FROM catalog \
                                                      WHERE for_sale = TRUE \
                                                      ORDER BY priority ASC")).all()
 
@@ -25,7 +25,7 @@ def get_catalog():
         if quantity == 20:
             break
         potions_for_sale.append({
-            'sku': row.bruh,
+            'sku': row.sku,
             'name': row.name,
             'quantity': row.quantity,
             'price': row.price,
