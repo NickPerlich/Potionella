@@ -41,7 +41,7 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
         with db.engine.begin() as connection:
             connection.execute(sqlalchemy.text("UPDATE inventory \
                                                 SET quantity = :gold_spent \
-                                                WHERE name = gold"), {
+                                                WHERE name = 'gold'"), {
                                                     'gold_spent': gold_spent
                                                 })
 
@@ -63,7 +63,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     with db.engine.begin() as connection:
         inventory_result = connection.execute(sqlalchemy.text("SELECT quantity \
                                                                FROM inventory \
-                                                               WHERE name = gold")).first()
+                                                               WHERE name = 'gold'")).first()
         gold = inventory_result.quantity
     
     # create the list of barrels to purchase and make sure all the barrels I want to buy are for sale and stop when I can't afford any more
