@@ -40,7 +40,7 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
         # subtract gold I spent
         with db.engine.begin() as connection:
             connection.execute(sqlalchemy.text("UPDATE inventory \
-                                                SET quantity = :gold_spent \
+                                                SET quantity = inventory.quantity - :gold_spent \
                                                 WHERE name = 'gold'"), {
                                                     'gold_spent': gold_spent
                                                 })
