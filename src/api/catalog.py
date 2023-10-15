@@ -16,6 +16,7 @@ def get_catalog():
         result = connection.execute(sqlalchemy.text("SELECT sku, name, quantity, price, potion_type \
                                                      FROM catalog \
                                                      WHERE for_sale = TRUE \
+                                                        AND quantity > 0 \
                                                      ORDER BY priority ASC")).all()
 
     potions_for_sale = []
