@@ -80,30 +80,41 @@ def get_bottle_plan():
     Go from barrel to bottle.
     """
 
-    # Each bottle has a quantity of what proportion of red, blue, and
-    # green potion to add.
-    # Expressed in integers from 1 to 100 that must sum up to 100.
-
-    # Initial logic: bottle all barrels into red potions.
-
-    # find out how much red ml potionella has
+    # from the database, get all potions I want to bottle sorted by priority
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text("SELECT num_red_ml, num_green_ml, num_blue_ml FROM global_inventory")).first()
-    
-    small_red_potion = { "potion_type": [100, 0, 0, 0], "quantity": result.num_red_ml//100 }
-    small_green_potion = { "potion_type": [0, 100, 0, 0], "quantity": result.num_green_ml//100 }
-    small_blue_potion = { "potion_type": [0, 0, 100, 0], "quantity": result.num_blue_ml//100 }
+        result = connection.execute(sqlalchemy.text("SELECT catalog.potion_type, bottler.quantity \
+                                                     FROM bottler \
+                                                     JOIN catalog ON bottler.potion_id = catalog.id\
+                                                     WHERE bottler.bottle = TRUE \
+                                                     ORDER BY bottler.priority ASC")).all()
+        
+    with db.engine.begin() as connection:
+        inventory = connection.execute(sqlalchemy.text("SELECT quantity \
+                                                     FROM inventory \
+                                                     ORDER BY id ASC")).all()
 
-    potions = []
+    # set up array which represents how much ml I have   
+    ml_owned = []
 
-    # if potionella has at least 100 ml plan to bottle into potions
-    if result.num_red_ml >= 100:
-        potions.append(small_red_potion)
-    if result.num_green_ml >= 100:
-        potions.append(small_green_potion)
-    if result.num_blue_ml >= 100:
-        potions.append(small_blue_potion)
+    for row in inventory:
+        ml_owned.append(row.quantity)
 
-    return potions
+    # get rid of gold
+    ml_owned.pop(0)
+        
+    # create the list of potions to bottle and stop when I can't afford any more
+    potions_to_bottle = []
+
+    for row in result:
+        quantity = 0
+        wish = row.quantity
+        while all(ml_possessed >= ml_required for ml_possessed, ml_required in zip(ml_owned, row.potion_type)) and wish > 0:
+            quantity += 1
+            wish -= 1
+            ml_owned = [ml_possessed - ml_required for ml_possessed, ml_required in zip(ml_owned, row.potion_type)]
+        potions_to_bottle.append({ 'potion_type': row.potion_type, 'quantity': quantity })
+
+    return potions_to_bottle
+
 
 

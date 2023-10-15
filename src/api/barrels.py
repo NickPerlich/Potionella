@@ -32,7 +32,7 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
             gold_spent += barrel.price * barrel.quantity
             with db.engine.begin() as connection:
                 connection.execute(sqlalchemy.text("UPDATE inventory \
-                                                    SET quantity = :ml_purchased \
+                                                    SET quantity = inventory.quantity + :ml_purchased \
                                                     WHERE potion_type = :type"), {
                                                         'ml_purchased': barrel.ml_per_barrel * barrel.quantity,
                                                         'type': barrel.potion_type
