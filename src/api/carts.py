@@ -86,7 +86,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
 
     with db.engine.begin() as connection:
         connection.execute(sqlalchemy.text("UPDATE inventory \
-                                            SET gold = inventory.gold + :earnings"), {
+                                            SET gold = gold + :earnings"), {
                                                 'earnings': gold_paid
                                             })
 
