@@ -71,7 +71,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
 
     with db.engine.begin() as connection:
         connection.execute(sqlalchemy.text("UPDATE catalog \
-                                            SET catalog.quantity = catalog.quantity - cart_items.quantity \
+                                            SET quantity = catalog.quantity - cart_items.quantity \
                                             FROM cart_items \
                                             WHERE catalog.sku = cart_items.sku and cart_items.cart_id = :cart_id"), {
                                                 'cart_id': cart_id
