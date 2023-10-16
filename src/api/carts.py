@@ -76,7 +76,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                                             WHERE catalog.sku = cart_items.sku and cart_items.cart_id = :cart_id"), {
                                                 'cart_id': cart_id
                                             })
-        
+    """    
     potions_bought = 0
     gold_paid = 0
 
@@ -89,7 +89,8 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                                             SET gold = gold + :earnings"), {
                                                 'earnings': gold_paid
                                             })
+    """
 
-    return {"total_potions_bought": potions_bought, "total_gold_paid": gold_paid}
+    return {"total_potions_bought": 0, "total_gold_paid": 0}
     
 
