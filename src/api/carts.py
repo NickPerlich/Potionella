@@ -68,7 +68,6 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                                                      WHERE cart_items.cart_id = :cart_id"), {
                                                          'cart_id': cart_id
                                                      }).all()
-    print(result)
 
     with db.engine.begin() as connection:
         connection.execute(sqlalchemy.text("UPDATE catalog \
@@ -76,8 +75,8 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                                             FROM cart_items \
                                             WHERE catalog.sku = cart_items.sku and cart_items.cart_id = :cart_id"), {
                                                 'cart_id': cart_id
-                                            })
-    """    
+                                            })    
+    
     potions_bought = 0
     gold_paid = 0
 
@@ -87,11 +86,12 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
 
     with db.engine.begin() as connection:
         connection.execute(sqlalchemy.text("UPDATE inventory \
-                                            SET gold = gold + :earnings"), {
-                                                'earnings': gold_paid
+                                            SET quantity = inventory.quantity + :earnings \
+                                            WHERE name = 'gold'"), {
+                                                'earnings': gold_paid,
                                             })
-    """
+    
 
-    return {"total_potions_bought": 0, "total_gold_paid": 0}
+    return {"total_potions_bought": potions_bought, "total_gold_paid": gold_paid}
     
 
