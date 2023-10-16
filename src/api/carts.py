@@ -62,13 +62,34 @@ class CartCheckout(BaseModel):
 def checkout(cart_id: int, cart_checkout: CartCheckout):
     """ """
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text("UPDATE catalog \
-                                                     SET quantity = catalog.quantity - cart_items.quantity \
+        result = connection.execute(sqlalchemy.text("SELECT catalog.price, cart_items.quantity \
                                                      FROM cart_items \
-                                                     WHERE catalog.sku = cart_items.sku and cart_items.cart_id = :cart_id;"), {
+                                                     JOIN catalog ON catalog.sku = cart_items.sku\
+                                                     WHERE cart_items.cart_id = :cart_id"), {
                                                          'cart_id': cart_id
-                                                     })
+                                                     }).all()
 
-    return {"total_potions_bought": , "total_gold_paid": }
+    with db.engine.begin() as connection:
+        connection.execute(sqlalchemy.text("UPDATE catalog \
+                                            SET catalog.quantity = catalog.quantity - cart_items.quantity \
+                                            FROM cart_items \
+                                            WHERE catalog.sku = cart_items.sku and cart_items.cart_id = :cart_id"), {
+                                                'cart_id': cart_id
+                                            })
+        
+    potions_bought = 0
+    gold_paid = 0
+
+    for row in result:
+        potions_bought += row.quantity
+        gold_paid += row.quantity * row.price
+
+    with db.engine.begin() as connection:
+        connection.execute(sqlalchemy.text("UPDATE inventory \
+                                            SET gold = inventory.gold + :earnings"), {
+                                                'earnings': gold_paid
+                                            })
+
+    return {"total_potions_bought": potions_bought, "total_gold_paid": gold_paid}
     
 
