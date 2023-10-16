@@ -37,6 +37,8 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
                                                         'ml_purchased': barrel.ml_per_barrel * barrel.quantity,
                                                         'type': barrel.potion_type
                                                     })
+            print(barrel.ml_per_barrel * barrel.quantity)
+            print(barrel.potion_type)
         # subtract gold I spent
         with db.engine.begin() as connection:
             connection.execute(sqlalchemy.text("UPDATE inventory \

@@ -41,6 +41,7 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
                                                     WHEN name = 'green_ml' THEN inventory.quantity - :green \
                                                     WHEN name = 'blue_ml' THEN inventory.quantity - :blue \
                                                     WHEN name = 'dark_ml' THEN inventory.quantity - :dark \
+                                                    ELSE quantity \
                                                 END"), {
                                                     'red': ml_spent[0],
                                                     'green': ml_spent[1],
