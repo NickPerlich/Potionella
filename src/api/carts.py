@@ -68,6 +68,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                                                      WHERE cart_items.cart_id = :cart_id"), {
                                                          'cart_id': cart_id
                                                      }).all()
+    print(result)
 
     with db.engine.begin() as connection:
         connection.execute(sqlalchemy.text("UPDATE catalog \
