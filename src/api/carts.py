@@ -45,12 +45,20 @@ class CartItem(BaseModel):
 def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
     """ """
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text("INSERT INTO cart_items (cart_id, sku, quantity) \
-                                                     VALUES (:id, :item_sku, :quantity)"), {
-                                                         'id': cart_id,
-                                                         'item_sku': item_sku,
-                                                         'quantity': cart_item.quantity
-                                                     })
+        result = connection.execute(sqlalchemy.text("SELECT id \
+                                            FROM catalog \
+                                            WHERE sku = :item_sku"), {
+                                                'item_sku': item_sku
+                                            }).first()
+
+    with db.engine.begin() as connection:
+        connection.execute(sqlalchemy.text("INSERT INTO cart_items (cart_id, catalog_id, sku, quantity) \
+                                            VALUES (:id, :cat_id, :item_sku, :quantity)"), {
+                                                'id': cart_id,
+                                                'cat_id': result.id,
+                                                'item_sku': item_sku,
+                                                'quantity': cart_item.quantity
+                                            })
 
     return "OK"
 
