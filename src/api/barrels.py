@@ -81,6 +81,8 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                 gold -= barrel_for_sale.price 
             barrels_to_purchase.append({ 'sku': row.sku, 'quantity': quantity })
 
+    print(barrels_to_purchase)
+
     return barrels_to_purchase
 
 

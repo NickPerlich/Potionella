@@ -72,6 +72,7 @@ def get_bottle_plan():
         inventory = connection.execute(sqlalchemy.text("SELECT quantity \
                                                      FROM inventory \
                                                      ORDER BY id ASC")).all()
+    print(inventory)
 
     # set up array which represents how much ml I have   
     ml_owned = []

@@ -98,6 +98,9 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                                             WHERE name = 'gold'"), {
                                                 'earnings': gold_paid,
                                             })
+        
+    print(potions_bought)
+    print(gold_paid)
     
 
     return {"total_potions_bought": potions_bought, "total_gold_paid": gold_paid}

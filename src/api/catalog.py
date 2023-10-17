@@ -34,4 +34,6 @@ def get_catalog():
         })
         quantity += row.quantity
 
+    print(potions_for_sale)
+
     return potions_for_sale
