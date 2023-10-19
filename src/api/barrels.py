@@ -30,7 +30,7 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
     if len(barrels_delivered) > 0:
         for barrel in barrels_delivered:
         # create transaction for each barrel
-            description = f"Potionella bought {barrel.quantity} {barrel.sku} for {barrel.price*barrel.quantity}"
+            description = f"Potionella bought {barrel.quantity} {barrel.sku} for {barrel.price*barrel.quantity} gold."
             with db.engine.begin() as connection:
                 result = connection.execute(sqlalchemy.text("INSERT INTO transactions (description) \
                                                              VALUES (:desc) \
@@ -38,6 +38,18 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
                                                                  'desc': description
                                                              })
                 transaction_id = result.scalar()
+            with db.engine.begin() as connection:
+                connection.execute(sqlalchemy.text("INSERT INTO ledger_entries (transaction_id, potion_type, item_type, change) \
+                                                    VALUES \
+                                                        (:trans_id, :p_type, :i_type1, :delta1) \
+                                                        (:trans_id, NULL, :i_type2, :delta2)"), {
+                                                        'trans_id': transaction_id,
+                                                        'p_type': barrel.potion_type,
+                                                        'i_type1': 'ml',
+                                                        'delta1': barrel.quantity * barrel.ml_per_barrel,
+                                                        'i_type2': 'gold',
+                                                        'delta2': barrel.quantity * barrel.price
+                                                    })
         
         
 
