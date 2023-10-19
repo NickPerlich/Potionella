@@ -42,7 +42,7 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
                 connection.execute(sqlalchemy.text("INSERT INTO ledger_entries (transaction_id, potion_type, item_type, change) \
                                                     VALUES \
                                                         (:trans_id, :p_type, :i_type1, :delta1), \
-                                                        (:trans_id, 'NULL', :i_type2, :delta2)"), {
+                                                        (:trans_id, :p_type, :i_type2, :delta2)"), {
                                                         'trans_id': transaction_id,
                                                         'p_type': barrel.potion_type,
                                                         'i_type1': 'ml',
