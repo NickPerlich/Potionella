@@ -39,7 +39,7 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
                                                              })
                 transaction_id = result.scalar()
             with db.engine.begin() as connection:
-                connection.execute(sqlalchemy.text("INSERT INTO ledger_entries (transaction_id, potion_type, item_type, change) \
+                connection.execute(sqlalchemy.text("INSERT INTO ledger_entries (transaction_id, item_type, change, potion_type) \
                                                     VALUES \
                                                         (:trans_id, :i_type1, :delta1, :p_type), \
                                                         (:trans_id, :i_type2, :delta2)"), {
