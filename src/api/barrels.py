@@ -39,17 +39,20 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
                                                              })
                 transaction_id = result.scalar()
             with db.engine.begin() as connection:
-                connection.execute(sqlalchemy.text("INSERT INTO ledger_entries (transaction_id, item_type, change, potion_type) \
-                                                    VALUES \
-                                                        (:trans_id, :i_type1, :delta1, :p_type), \
-                                                        (:trans_id, :i_type2, :delta2)"), {
+                connection.execute(sqlalchemy.text("""INSERT INTO ledger_entries 
+                                                    (transaction_id, item_type, change, potion_type) 
+                                                    VALUES 
+                                                        (:trans_id, :i_type, :delta, :p_type)"""), [{
                                                         'trans_id': transaction_id,
                                                         'p_type': barrel.potion_type,
-                                                        'i_type1': 'ml',
-                                                        'delta1': barrel.quantity * barrel.ml_per_barrel,
-                                                        'i_type2': 'gold',
-                                                        'delta2': barrel.quantity * barrel.price
-                                                    })
+                                                        'i_type': 'ml',
+                                                        'delta': barrel.quantity * barrel.ml_per_barrel},
+                                                        {
+                                                            'trans_id': transaction_id,
+                                                            'p_type': Null,
+                                                            'i_type': 'gold',
+                                                            'delta': barrel.quantity * barrel.price
+                                                        }])
         
         
 
