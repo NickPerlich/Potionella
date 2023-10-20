@@ -49,7 +49,7 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
                                                         'delta': barrel.quantity * barrel.ml_per_barrel},
                                                         {
                                                             'trans_id': transaction_id,
-                                                            'p_type': Null,
+                                                            'p_type': null,
                                                             'i_type': 'gold',
                                                             'delta': barrel.quantity * barrel.price
                                                         }])
