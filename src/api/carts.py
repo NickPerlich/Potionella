@@ -90,7 +90,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                                                             RETURNING id"""), {
                                                                 'desc': description
                                                             }).scalar()
-        with db.enginge.begin() as connection:
+        with db.engine.begin() as connection:
             connection.execute(sqlalchemy.text("""INSERT INTO ledger_entries 
                                                     (transaction_id, item_type, ml_type, change) 
                                                     VALUES 
