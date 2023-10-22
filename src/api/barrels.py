@@ -37,6 +37,7 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
                                                              RETURNING id"""), {
                                                                  'desc': description
                                                              }).scalar()
+                
             # gold lost ml gained
             with db.engine.begin() as connection:
                 connection.execute(sqlalchemy.text("""INSERT INTO ledger_entries 
@@ -86,8 +87,9 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
             while gold >= barrel_for_sale.price and wish > 0:
                 quantity += 1
                 wish -= 1
-                gold -= barrel_for_sale.price 
-            barrels_to_purchase.append({ 'sku': row.sku, 'quantity': quantity })
+                gold -= barrel_for_sale.price
+            if quantity > 0: 
+                barrels_to_purchase.append({ 'sku': row.sku, 'quantity': quantity })
 
     return barrels_to_purchase
 

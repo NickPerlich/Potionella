@@ -45,7 +45,7 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
                         'trans_id': transaction_id,
                         'color': color,
                         'i_type': 'ml',
-                        'delta': -(potion.potion_type[i])
+                        'delta': -(potion.potion_type[i] * potion.quantity)
                     })
                 
             # ml lost potions gained
@@ -104,7 +104,8 @@ def get_bottle_plan():
             quantity += 1
             wish -= 1
             ml_owned = [ml_possessed - ml_required for ml_possessed, ml_required in zip(ml_owned, row.potion_type)]
-        potions_to_bottle.append({ 'potion_type': row.potion_type, 'quantity': quantity })
+        if quantity > 0:
+            potions_to_bottle.append({ 'potion_type': row.potion_type, 'quantity': quantity })
 
     return potions_to_bottle
 

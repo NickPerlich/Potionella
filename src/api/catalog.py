@@ -30,6 +30,8 @@ def get_catalog():
                                                         WHERE ml_type = :type"""),{
                                                             'type': row.potion_type
                                                         }).scalar()
+        if amount is None:
+            continue
         potions_for_sale.append({
             'sku': row.sku,
             'name': row.name,
