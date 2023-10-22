@@ -13,11 +13,10 @@ def get_catalog():
 
     # Can return a max of 20 items.
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text("SELECT sku, name, quantity, price, potion_type \
-                                                     FROM catalog \
-                                                     WHERE for_sale = TRUE \
-                                                        AND quantity > 0 \
-                                                     ORDER BY priority ASC")).all()
+        result = connection.execute(sqlalchemy.text("""SELECT sku, name, price, potion_type 
+                                                     FROM catalog 
+                                                     WHERE for_sale = TRUE 
+                                                     ORDER BY priority ASC""")).all()
 
     potions_for_sale = []
     quantity = 0
@@ -25,14 +24,20 @@ def get_catalog():
     for row in result:
         if quantity == 20:
             break
+        with db.engine.begin() as connection:
+            amount = connection.execute(sqlalchemy.text("""SELECT SUM(change)
+                                                        FROM ledger_entries
+                                                        WHERE ml_type = :type"""),{
+                                                            'type': row.potion_type
+                                                        }).scalar()
         potions_for_sale.append({
             'sku': row.sku,
             'name': row.name,
-            'quantity': row.quantity,
+            'quantity': amount,
             'price': row.price,
             'potion_type': row.potion_type
         })
-        quantity += row.quantity
+        quantity += amount
 
     print(potions_for_sale)
 

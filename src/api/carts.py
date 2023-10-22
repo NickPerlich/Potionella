@@ -20,12 +20,11 @@ def create_cart(new_cart: NewCart):
     """ """
     # create a new cart in the carts table
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text("INSERT INTO carts (customer) \
+        cart_id = connection.execute(sqlalchemy.text("INSERT INTO carts (customer) \
                                                      VALUES (:patron) \
                                                      RETURNING id"), {
             'patron': new_cart.customer
-        })
-        cart_id = result.scalar()
+        }).scalar()
     # return the id of the new cart
     return {"cart_id": cart_id}
 
@@ -45,15 +44,15 @@ class CartItem(BaseModel):
 def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
     """ """
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text("SELECT id \
-                                            FROM catalog \
-                                            WHERE sku = :item_sku"), {
-                                                'item_sku': item_sku
-                                            }).first()
+        result = connection.execute(sqlalchemy.text("""SELECT id 
+                                                    FROM catalog 
+                                                    WHERE sku = :item_sku"""), {
+                                                        'item_sku': item_sku
+                                                    }).first()
 
     with db.engine.begin() as connection:
-        connection.execute(sqlalchemy.text("INSERT INTO cart_items (cart_id, catalog_id, sku, quantity) \
-                                            VALUES (:id, :cat_id, :item_sku, :quantity)"), {
+        connection.execute(sqlalchemy.text("""INSERT INTO cart_items (cart_id, catalog_id, sku, quantity) 
+                                            VALUES (:id, :cat_id, :item_sku, :quantity)"""), {
                                                 'id': cart_id,
                                                 'cat_id': result.id,
                                                 'item_sku': item_sku,
@@ -70,39 +69,43 @@ class CartCheckout(BaseModel):
 def checkout(cart_id: int, cart_checkout: CartCheckout):
     """ """
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text("SELECT catalog.price, cart_items.quantity \
-                                                     FROM cart_items \
-                                                     JOIN catalog ON catalog.sku = cart_items.sku\
-                                                     WHERE cart_items.cart_id = :cart_id"), {
+        result = connection.execute(sqlalchemy.text("""SELECT catalog.price, catalog.potion_type, cart_items.quantity 
+                                                     FROM cart_items 
+                                                     JOIN catalog ON catalog.sku = cart_items.sku
+                                                     WHERE cart_items.cart_id = :cart_id"""), {
                                                          'cart_id': cart_id
                                                      }).all()
-
-    with db.engine.begin() as connection:
-        connection.execute(sqlalchemy.text("UPDATE catalog \
-                                            SET quantity = catalog.quantity - cart_items.quantity \
-                                            FROM cart_items \
-                                            WHERE catalog.sku = cart_items.sku and cart_items.cart_id = :cart_id"), {
-                                                'cart_id': cart_id
-                                            })    
     
     potions_bought = 0
     gold_paid = 0
 
+    # subtract potions and add gold
     for row in result:
         potions_bought += row.quantity
         gold_paid += row.quantity * row.price
-
-    with db.engine.begin() as connection:
-        connection.execute(sqlalchemy.text("UPDATE inventory \
-                                            SET quantity = inventory.quantity + :earnings \
-                                            WHERE name = 'gold'"), {
-                                                'earnings': gold_paid,
-                                            })
+        description = f"Potionella sold {row.quantity} {row.potion_type} potions for {row.quantity * row.price} gold."
+        with db.engine.begin() as connection:
+            transaction_id = connection.execute(sqlalchemy.text("""INSERT INTO transactions (description) 
+                                                            VALUES (:desc) 
+                                                            RETURNING id"""), {
+                                                                'desc': description
+                                                            }).scalar()
+        with db.enginge.begin() as connection:
+            connection.execute(sqlalchemy.text("""INSERT INTO ledger_entries 
+                                                    (transaction_id, item_type, ml_type, change) 
+                                                    VALUES 
+                                                        (:trans_id, :i_type, :color, :delta)"""), [{
+                                                        'trans_id': transaction_id,
+                                                        'color': row.potion_type,
+                                                        'i_type': 'potion',
+                                                        'delta': -(row.quantity)},
+                                                        {
+                                                            'trans_id': transaction_id,
+                                                            'color': None,
+                                                            'i_type': 'gold',
+                                                            'delta': row.quantity * row.price
+                                                        }])
         
-    print(potions_bought)
-    print(gold_paid)
-    
-
     return {"total_potions_bought": potions_bought, "total_gold_paid": gold_paid}
     
 

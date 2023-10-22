@@ -32,26 +32,26 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
         # create transaction for each barrel
             description = f"Potionella bought {barrel.quantity} {barrel.sku} for {barrel.price*barrel.quantity} gold."
             with db.engine.begin() as connection:
-                result = connection.execute(sqlalchemy.text("INSERT INTO transactions (description) \
-                                                             VALUES (:desc) \
-                                                             RETURNING id"), {
+                transaction_id = connection.execute(sqlalchemy.text("""INSERT INTO transactions (description) 
+                                                             VALUES (:desc) 
+                                                             RETURNING id"""), {
                                                                  'desc': description
-                                                             })
-                transaction_id = result.scalar()
+                                                             }).scalar()
+            # gold lost ml gained
             with db.engine.begin() as connection:
                 connection.execute(sqlalchemy.text("""INSERT INTO ledger_entries 
-                                                    (transaction_id, item_type, change, potion_type) 
+                                                    (transaction_id, item_type, ml_type, change) 
                                                     VALUES 
-                                                        (:trans_id, :i_type, :delta, :p_type)"""), [{
+                                                        (:trans_id, :i_type, :color, :delta)"""), [{
                                                         'trans_id': transaction_id,
-                                                        'p_type': barrel.potion_type,
+                                                        'color': barrel.potion_type,
                                                         'i_type': 'ml',
                                                         'delta': barrel.quantity * barrel.ml_per_barrel},
                                                         {
                                                             'trans_id': transaction_id,
-                                                            'p_type': None,
+                                                            'color': None,
                                                             'i_type': 'gold',
-                                                            'delta': barrel.quantity * barrel.price
+                                                            'delta': -(barrel.quantity * barrel.price)
                                                         }])
         
         
@@ -66,16 +66,15 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     
     # from the database, get all barrels I want to buy sorted by priority
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text("SELECT sku, wish \
-                                                     FROM barrels \
-                                                     WHERE purchase = TRUE \
-                                                     ORDER BY priority ASC")).all()
+        result = connection.execute(sqlalchemy.text("""SELECT sku, wish 
+                                                     FROM barrels 
+                                                     WHERE purchase = TRUE 
+                                                     ORDER BY priority ASC""")).all()
         
     with db.engine.begin() as connection:
-        inventory_result = connection.execute(sqlalchemy.text("SELECT quantity \
-                                                               FROM inventory \
-                                                               WHERE name = 'gold'")).first()
-        gold = inventory_result.quantity
+        gold = connection.execute(sqlalchemy.text("""SELECT SUM(change)
+                                                                FROM ledger_entries
+                                                                WHERE item_type = 'gold'""")).scalar()
     
     # create the list of barrels to purchase and make sure all the barrels I want to buy are for sale and stop when I can't afford any more
     barrels_to_purchase = []

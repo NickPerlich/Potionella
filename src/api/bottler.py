@@ -20,34 +20,43 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
     """ """
     print(potions_delivered)
 
-    ml_spent = [0,0,0,0]
-
     if len(potions_delivered) > 0:
-        # add all the potions I bottled to catalog 
+        # log all the potions I bottled and all the ml I spent
         for potion in potions_delivered:
-            ml_spent = [ml_lost + (ml_cost * potion.quantity) for ml_lost, ml_cost in zip(ml_spent, potion.potion_type)]
+            description = f"Potionella bottled {potion.quantity} {potion.potion_type} potions."
             with db.engine.begin() as connection:
-                connection.execute(sqlalchemy.text("UPDATE catalog \
-                                                    SET quantity = catalog.quantity + :amount \
-                                                    WHERE potion_type = :type"), {
-                                                        'amount': potion.quantity,
-                                                        'type': potion.potion_type
-                                                    })
-        # subtract ml I spent
-        with db.engine.begin() as connection:
-            connection.execute(sqlalchemy.text("UPDATE inventory \
-                                                SET quantity = CASE \
-                                                    WHEN name = 'red_ml' THEN inventory.quantity - :red \
-                                                    WHEN name = 'green_ml' THEN inventory.quantity - :green \
-                                                    WHEN name = 'blue_ml' THEN inventory.quantity - :blue \
-                                                    WHEN name = 'dark_ml' THEN inventory.quantity - :dark \
-                                                    ELSE quantity \
-                                                END"), {
-                                                    'red': ml_spent[0],
-                                                    'green': ml_spent[1],
-                                                    'blue': ml_spent[2],
-                                                    'dark': ml_spent[3]
-                                                })
+                transaction_id = connection.execute(sqlalchemy.text("""INSERT INTO transactions (description) 
+                                                             VALUES (:desc) 
+                                                             RETURNING id"""), {
+                                                                 'desc': description
+                                                             }).scalar()
+            params = []
+            params.append({
+                'trans_id': transaction_id,
+                'color': potion.potion_type,
+                'i_type': 'potion',
+                'delta': potion.quantity
+            })
+            for i in range(len(potion.potion_type)):
+                color = [0,0,0,0]
+                if potion.potion_type[i] > 0:
+                    color[i] = 1
+                    params.append({
+                        'trans_id': transaction_id,
+                        'color': color,
+                        'i_type': 'ml',
+                        'delta': -(potion.potion_type[i])
+                    })
+                
+            # ml lost potions gained
+            with db.engine.begin() as connection:
+                connection.execute(sqlalchemy.text("""INSERT INTO ledger_entries 
+                                                    (transaction_id, item_type, ml_type, change) 
+                                                    VALUES 
+                                                        (:trans_id, :i_type, :color, :delta)"""), params)
+            
+        
+        
         
 
     return "OK"
@@ -61,34 +70,36 @@ def get_bottle_plan():
 
     # from the database, get all potions I want to bottle sorted by priority
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text("SELECT catalog.potion_type, bottler.quantity \
-                                                     FROM bottler \
-                                                     JOIN catalog ON bottler.potion_id = catalog.id\
-                                                     WHERE bottler.bottle = TRUE \
-                                                     ORDER BY bottler.priority ASC")).all()
-    print(result)
+        result = connection.execute(sqlalchemy.text("""SELECT catalog.potion_type, bottler.wish 
+                                                     FROM bottler 
+                                                     JOIN catalog ON bottler.potion_id = catalog.id
+                                                     WHERE bottler.bottle = TRUE 
+                                                     ORDER BY bottler.priority ASC""")).all()
         
     with db.engine.begin() as connection:
-        inventory = connection.execute(sqlalchemy.text("SELECT quantity \
-                                                     FROM inventory \
-                                                     ORDER BY id ASC")).all()
-    print(inventory)
+        inventory = connection.execute(sqlalchemy.text("""SELECT change, ml_type
+                                                            FROM ledger_entries
+                                                            WHERE item_type = 'ml'""")).all()
 
     # set up array which represents how much ml I have   
-    ml_owned = []
+    ml_owned = [0,0,0,0]
 
     for row in inventory:
-        ml_owned.append(row.quantity)
-
-    # get rid of gold
-    ml_owned.pop(0)
+        if row.ml_type == [1,0,0,0]:
+            ml_owned[0] += row.change
+        elif row.ml_type == [0,1,0,0]:
+            ml_owned[1] += row.change
+        elif row.ml_type == [0,0,1,0]:
+            ml_owned[2] += row.change
+        elif row.ml_type == [0,0,0,1]:
+            ml_owned[3] += row.change
         
     # create the list of potions to bottle and stop when I can't afford any more
     potions_to_bottle = []
 
     for row in result:
         quantity = 0
-        wish = row.quantity
+        wish = row.wish
         while all(ml_possessed >= ml_required for ml_possessed, ml_required in zip(ml_owned, row.potion_type)) and wish > 0:
             quantity += 1
             wish -= 1
