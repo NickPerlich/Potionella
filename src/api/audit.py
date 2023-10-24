@@ -15,17 +15,17 @@ router = APIRouter(
 def get_inventory():
     """ """
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text("""SELECT item_type, SUM(change) total
+        result = connection.execute(sqlalchemy.text("""SELECT item_type, SUM(change) total AS amount
                                                     FROM ledger_entries
                                                     GROUP BY item_type""")).all
 
     for row in result:
         if row.item_type == 'potion':
-            num_potions = row.SUM(change)
+            num_potions = row.amount
         elif row.item_type == 'ml':
-            num_ml = row.SUM(change)
+            num_ml = row.amount
         elif row.item_type == 'gold':
-            num_gold = row.SUM(change)
+            num_gold = row.amount
     
     return {"number_of_potions": num_potions, "ml_in_barrels": num_ml, "gold": num_gold}
 
