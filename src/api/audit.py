@@ -17,7 +17,7 @@ def get_inventory():
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text("""SELECT item_type, SUM(change) total 
                                                     FROM ledger_entries
-                                                    GROUP BY item_type""")).all
+                                                    GROUP BY item_type""")).all()
 
     for row in result:
         if row.item_type == 'potion':
