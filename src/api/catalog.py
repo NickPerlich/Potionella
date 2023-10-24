@@ -21,25 +21,25 @@ def get_catalog():
     potions_for_sale = []
     quantity = 0
 
-    for row in result:
-        if quantity == 20:
-            break
-        with db.engine.begin() as connection:
+    with db.engine.begin() as connection:
+        for row in result:
+            if quantity == 20:
+                break
             amount = connection.execute(sqlalchemy.text("""SELECT SUM(change)
                                                         FROM ledger_entries
                                                         WHERE ml_type = :type"""),{
                                                             'type': row.potion_type
                                                         }).scalar()
-        if amount is None:
-            continue
-        potions_for_sale.append({
-            'sku': row.sku,
-            'name': row.name,
-            'quantity': amount,
-            'price': row.price,
-            'potion_type': row.potion_type
-        })
-        quantity += amount
+            if amount is None or amount < 1:
+                continue
+            potions_for_sale.append({
+                'sku': row.sku,
+                'name': row.name,
+                'quantity': amount,
+                'price': row.price,
+                'potion_type': row.potion_type
+            })
+            quantity += amount
 
     print(potions_for_sale)
 
