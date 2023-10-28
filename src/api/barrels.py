@@ -41,16 +41,18 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
             # gold lost ml gained
             with db.engine.begin() as connection:
                 connection.execute(sqlalchemy.text("""INSERT INTO ledger_entries 
-                                                    (transaction_id, item_type, ml_type, change) 
+                                                    (transaction_id, item_type, ml_type, customer, change) 
                                                     VALUES 
-                                                        (:trans_id, :i_type, :color, :delta)"""), [{
+                                                        (:trans_id, :i_type, :color, :patron, :delta)"""), [{
                                                         'trans_id': transaction_id,
                                                         'color': barrel.potion_type,
+                                                        'patron': None,
                                                         'i_type': 'ml',
                                                         'delta': barrel.quantity * barrel.ml_per_barrel},
                                                         {
                                                             'trans_id': transaction_id,
                                                             'color': None,
+                                                            'patron': None,
                                                             'i_type': 'gold',
                                                             'delta': -(barrel.quantity * barrel.price)
                                                         }])

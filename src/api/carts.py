@@ -127,42 +127,49 @@ class CartCheckout(BaseModel):
 def checkout(cart_id: int, cart_checkout: CartCheckout):
     """ """
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text("""SELECT catalog.price, catalog.potion_type, cart_items.quantity 
+        result = connection.execute(sqlalchemy.text("""SELECT catalog.price, catalog.potion_type, cart_items.quantity
                                                      FROM cart_items 
                                                      JOIN catalog ON catalog.sku = cart_items.sku
                                                      WHERE cart_items.cart_id = :cart_id"""), {
                                                          'cart_id': cart_id
                                                      }).all()
     
-    potions_bought = 0
-    gold_paid = 0
+        potions_bought = 0
+        gold_paid = 0
 
-    # subtract potions and add gold
-    for row in result:
-        potions_bought += row.quantity
-        gold_paid += row.quantity * row.price
-        description = f"Potionella sold {row.quantity} {row.potion_type} potions for {row.quantity * row.price} gold."
-        with db.engine.begin() as connection:
+        customer = connection.execute(sqlalchemy.text("""SELECT customer 
+                                                        FROM carts
+                                                        WHERE cart_id = :id"""), {
+                                                            'id': cart_id
+                                                        }).first().customer
+
+        # subtract potions and add gold
+        for row in result:
+            potions_bought += row.quantity
+            gold_paid += row.quantity * row.price
+            description = f"Potionella sold {row.quantity} {row.potion_type} potions for {row.quantity * row.price} gold to {customer}."
             transaction_id = connection.execute(sqlalchemy.text("""INSERT INTO transactions (description) 
-                                                            VALUES (:desc) 
-                                                            RETURNING id"""), {
-                                                                'desc': description
-                                                            }).scalar()
-        with db.engine.begin() as connection:
+                                                                VALUES (:desc) 
+                                                                RETURNING id"""), {
+                                                                    'desc': description
+                                                                }).scalar()
+            
             connection.execute(sqlalchemy.text("""INSERT INTO ledger_entries 
-                                                    (transaction_id, item_type, ml_type, change) 
-                                                    VALUES 
-                                                        (:trans_id, :i_type, :color, :delta)"""), [{
-                                                        'trans_id': transaction_id,
-                                                        'color': row.potion_type,
-                                                        'i_type': 'potion',
-                                                        'delta': -(row.quantity)},
-                                                        {
+                                                        (transaction_id, item_type, ml_type, customer, change) 
+                                                        VALUES 
+                                                            (:trans_id, :i_type, :color, :patron, :delta)"""), [{
                                                             'trans_id': transaction_id,
-                                                            'color': None,
-                                                            'i_type': 'gold',
-                                                            'delta': row.quantity * row.price
-                                                        }])
+                                                            'color': row.potion_type,
+                                                            'patron': customer, 
+                                                            'i_type': 'potion',
+                                                            'delta': -(row.quantity)},
+                                                            {
+                                                                'trans_id': transaction_id,
+                                                                'color': None,
+                                                                'patron': customer, 
+                                                                'i_type': 'gold',
+                                                                'delta': row.quantity * row.price
+                                                            }])
         
     return {"total_potions_bought": potions_bought, "total_gold_paid": gold_paid}
     

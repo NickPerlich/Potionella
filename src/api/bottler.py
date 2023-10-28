@@ -34,6 +34,7 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
             params.append({
                 'trans_id': transaction_id,
                 'color': potion.potion_type,
+                'patron': None,
                 'i_type': 'potion',
                 'delta': potion.quantity
             })
@@ -44,6 +45,7 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
                     params.append({
                         'trans_id': transaction_id,
                         'color': color,
+                        'patrong': None,
                         'i_type': 'ml',
                         'delta': -(potion.potion_type[i] * potion.quantity)
                     })
@@ -51,9 +53,9 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
             # ml lost potions gained
             with db.engine.begin() as connection:
                 connection.execute(sqlalchemy.text("""INSERT INTO ledger_entries 
-                                                    (transaction_id, item_type, ml_type, change) 
+                                                    (transaction_id, item_type, ml_type, customer, change) 
                                                     VALUES 
-                                                        (:trans_id, :i_type, :color, :delta)"""), params)
+                                                        (:trans_id, :i_type, :color, :patron, :delta)"""), params)
             
         
         
