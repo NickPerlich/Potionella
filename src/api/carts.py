@@ -53,6 +53,7 @@ def search_orders(
     Your results must be paginated, the max results you can return at any
     time is 5 total line items.
     """
+    
 
     return {
         "previous": "",
@@ -137,12 +138,6 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
         potions_bought = 0
         gold_paid = 0
 
-        customer = connection.execute(sqlalchemy.text("""SELECT customer 
-                                                        FROM carts
-                                                        WHERE id = :id"""), {
-                                                            'id': cart_id
-                                                        }).first().customer
-
         # subtract potions and add gold
         for row in result:
             potions_bought += row.quantity
@@ -155,18 +150,18 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                                                                 }).scalar()
             
             connection.execute(sqlalchemy.text("""INSERT INTO ledger_entries 
-                                                        (transaction_id, item_type, ml_type, customer, change) 
+                                                        (transaction_id, item_type, ml_type, cart_id, change) 
                                                         VALUES 
-                                                            (:trans_id, :i_type, :color, :patron, :delta)"""), [{
+                                                            (:trans_id, :i_type, :color, :c_id, :delta)"""), [{
                                                             'trans_id': transaction_id,
                                                             'color': row.potion_type,
-                                                            'patron': customer, 
+                                                            'c_id': cart_id, 
                                                             'i_type': 'potion',
                                                             'delta': -(row.quantity)},
                                                             {
                                                                 'trans_id': transaction_id,
                                                                 'color': None,
-                                                                'patron': customer, 
+                                                                'patron': cart_id, 
                                                                 'i_type': 'gold',
                                                                 'delta': row.quantity * row.price
                                                             }])
