@@ -53,20 +53,40 @@ def search_orders(
     Your results must be paginated, the max results you can return at any
     time is 5 total line items.
     """
-    
+    statement = (
+        sqlalchemy.select(
+            db.ledger_entries.c.id,
+            db.ledger_entries.c.customer,
+            db.ledger_entries.c.change,
+            db.transactions.c.created_at,
+            db.cart_items.c.sku
+        ).select_from(
+            db.ledger_entries
+            .join(db.transactions, db.ledger_entries.c.transaction_id == db.transactions.c.id)
+            .join(db.cart_items, db.ledger_entries.c.cart_id == db.cart_items.c.cart_id)
+        ).where(db.ledger_entries.c.item_type == 'gold')
+    )
+
+    with db.engine.begin() as connection:
+        result = connection.execute(statement)
+
+    search_results = []
+
+    for row in result:
+        search_results.append(
+            {
+                "line_item_id": row.id,
+                "item_sku": row.sku,
+                "customer_name": row.customer,
+                "line_item_total": row.change,
+                "timestamp": row.created_at
+            }
+        )
 
     return {
         "previous": "",
         "next": "",
-        "results": [
-            {
-                "line_item_id": 1,
-                "item_sku": "1 oblivion potion",
-                "customer_name": "Scaramouche",
-                "line_item_total": 50,
-                "timestamp": "2021-01-01T00:00:00Z",
-            }
-        ],
+        "results": search_results,
     }
 
 
