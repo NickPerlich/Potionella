@@ -45,7 +45,7 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
                     params.append({
                         'trans_id': transaction_id,
                         'color': color,
-                        'patrong': None,
+                        'patron': None,
                         'i_type': 'ml',
                         'delta': -(potion.potion_type[i] * potion.quantity)
                     })
