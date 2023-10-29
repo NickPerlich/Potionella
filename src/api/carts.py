@@ -139,7 +139,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
 
         customer = connection.execute(sqlalchemy.text("""SELECT customer 
                                                         FROM carts
-                                                        WHERE cart_id = :id"""), {
+                                                        WHERE id = :id"""), {
                                                             'id': cart_id
                                                         }).first().customer
 
