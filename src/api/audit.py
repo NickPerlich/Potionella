@@ -27,7 +27,7 @@ def get_inventory():
         elif row.item_type == 'gold':
             num_gold = row.total
     
-    return {"number_of_potions": 0, "ml_in_barrels": num_ml, "gold": num_gold}
+    return {"number_of_potions": num_potions, "ml_in_barrels": num_ml, "gold": num_gold}
 
 class Result(BaseModel):
     gold_match: bool
