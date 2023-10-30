@@ -144,7 +144,7 @@ def search_orders(
 
     return {
         "previous": previous,
-        "next": next,
+        "next": next_page,
         "results": search_results,
     }
 
