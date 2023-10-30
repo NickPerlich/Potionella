@@ -53,22 +53,15 @@ def search_orders(
     Your results must be paginated, the max results you can return at any
     time is 5 total line items.
     """
-    statement = (
-        sqlalchemy.select(
-            db.ledger_entries.c.id,
-            db.ledger_entries.c.customer,
-            db.ledger_entries.c.change,
-            db.transactions.c.created_at,
-            db.cart_items.c.sku
-        ).select_from(
-            db.ledger_entries
-            .join(db.transactions, db.ledger_entries.c.transaction_id == db.transactions.c.id)
-            .join(db.cart_items, db.ledger_entries.c.cart_id == db.cart_items.c.cart_id)
-        ).where(db.ledger_entries.c.item_type == 'gold')
-    )
+
+    query = """SELECT ledger_entries.id, cart_items.sku, ledger_entries.customer, ledger_entries.change, transactions.created_at 
+            FROM ledger_entries
+            JOIN transactions ON ledger_entries.transaction_id = transactions.id
+            JOIN cart_items ON ledger_entries.cart_id = cart_items.cart_id
+            WHERE ledger_entries.item_type = 'gold'"""
 
     with db.engine.begin() as connection:
-        result = connection.execute(statement)
+        result = connection.execute(sqlalchemy.text(query))
 
     search_results = []
 
