@@ -214,7 +214,10 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
         potions_bought = 0
         gold_paid = 0
 
-        customer = connection.execute(sqlalchemy.select(db.carts.c.customer).where(db.carts.c.id == cart_id)).first().customer
+        meta = sqlalchemy.MetaData()
+        meta.reflect(bind=db.engine)
+        carts = meta.tables['carts']
+        customer = connection.execute(sqlalchemy.select(carts.c.customer).where(carts.c.id == cart_id)).first().customer
 
         # subtract potions and add gold
         for row in result:
