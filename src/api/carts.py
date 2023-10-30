@@ -130,14 +130,17 @@ def search_orders(
         )
 
     previous = ""
-    next = ""
+    next_page = ""
     if search_page != "":
         previous = str(int(search_page)-1)
         if len_result > max_results:
-            next = str(int(search_page)+1)
+            next_page = str(int(search_page)+1)
     else:
         if len_result > max_results:
-            next = '1'
+            next_page = '1'
+
+    if search_page == "0":
+        previous = ""
 
     return {
         "previous": previous,
