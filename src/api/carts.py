@@ -53,19 +53,72 @@ def search_orders(
     Your results must be paginated, the max results you can return at any
     time is 5 total line items.
     """
+    
+    meta = sqlalchemy.MetaData()
+    meta.reflect(bind=db.engine)
+    max_results = 5
+    limit = max_results + 1
+    if search_page != "":
+        offset = int(search_page) * max_results
+    else:
+        offset = 0
+    # get a table from metadata => print(meta.tables['ledger_entries'])
 
-    query = """SELECT ledger_entries.id, cart_items.sku, ledger_entries.customer, ledger_entries.change, transactions.created_at 
-            FROM ledger_entries
-            JOIN transactions ON ledger_entries.transaction_id = transactions.id
-            JOIN cart_items ON ledger_entries.cart_id = cart_items.cart_id
-            WHERE ledger_entries.item_type = 'gold'"""
+    ledger_entries, cart_items, transactions = (meta.tables['ledger_entries'], meta.tables['cart_items'], meta.tables['transactions'])
+
+    if sort_col == "customer_name" and sort_order == "asc":
+        order_by = ledger_entries.c.customer
+    elif sort_col == "customer_name" and sort_order == "desc":
+        order_by = sqlalchemy.desc(ledger_entries.c.customer)
+    elif sort_col == "item_sku" and sort_order == "asc":
+        order_by = cart_items.c.sku
+    elif sort_col == "item_sku" and sort_order == "desc":
+        order_by = sqlalchemy.desc(cart_items.c.sku)
+    elif sort_col == "line_item_total" and sort_order == "asc":
+        order_by = ledger_entries.c.change
+    elif sort_col == "line_item_total" and sort_order == "desc":
+        order_by = sqlalchemy.desc(ledger_entries.c.change)
+    elif sort_col == "timestamp" and sort_order == "asc":
+        order_by = transactions.c.created_at
+    elif sort_col == "timestamp" and sort_order == "desc":
+        order_by = sqlalchemy.desc(transactions.c.created_at)
+    
+
+    stmt = (
+        sqlalchemy.select(
+            ledger_entries.c.id,
+            cart_items.c.sku,
+            ledger_entries.c.customer,
+            ledger_entries.c.change,
+            transactions.c.created_at
+        )
+        .select_from(
+            ledger_entries
+            .join(transactions, ledger_entries.c.transaction_id == transactions.c.id)
+            .join(cart_items, ledger_entries.c.cart_id == cart_items.c.cart_id)
+        )
+        .where(ledger_entries.c.item_type == 'gold')
+        .limit(limit)
+        .offset(offset)
+        .order_by(order_by, ledger_entries.c.id)
+    )
+
+    if customer_name != "":
+        stmt = stmt.where(ledger_entries.c.customer.ilike(f"%{customer_name}%"))
+
+    if potion_sku != "":
+        stmt = stmt.where(cart_items.c.sku.ilike(f"%{potion_sku}%"))
 
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text(query))
+        result = connection.execute(stmt)
 
     search_results = []
+    len_result = 0
 
     for row in result:
+        len_result += 1
+        if len_result == limit:
+            break
         search_results.append(
             {
                 "line_item_id": row.id,
@@ -76,9 +129,19 @@ def search_orders(
             }
         )
 
+    previous = ""
+    next = ""
+    if search_page != "":
+        previous = str(int(search_page)-1)
+        if len_result > max_results:
+            next = str(int(search_page)+1)
+    else:
+        if len_result > max_results:
+            next = '1'
+
     return {
-        "previous": "",
-        "next": "",
+        "previous": previous,
+        "next": next,
         "results": search_results,
     }
 
