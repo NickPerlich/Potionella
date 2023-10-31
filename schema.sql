@@ -62,7 +62,10 @@ create table
     change integer not null default 0,
     ml_type integer[] null,
     item_type text null,
+    cart_id integer null,
+    customer text null,
     constraint ledger_entries_pkey primary key (id),
+    constraint ledger_entries_cart_id_fkey foreign key (cart_id) references carts (id),
     constraint ledger_entries_transaction_id_fkey foreign key (transaction_id) references transactions (id)
   ) tablespace pg_default;
   TRANSACTIONS:
